@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.like.LikeDAO">
+
+	
+	<select id="getLikeCnt" parameterType="String" resultType="int">
+		select count(*) as cnt
+		from like_t lt
+		WHERE lt.prd_board_id=#{prd_board_id}
+	</select>
+	
+	<select id="likeIsExist" parameterType="String" resultType="int">
+		select count(*) as cnt
+		from like_t lt
+		WHERE lt.prd_board_id = #{prd_board_id} and lt.user_id=#{user_id}
+	</select>
+	
+	<insert id="InsertLike" parameterType="likeDTO">
+		insert into like_t(like_id,prd_board_id,user_id)
+		values(like_t_like_id_seq.nextval,#{prd_board_id},#{user_id})
+	</insert>
+	
+	<delete id="DeleteLike" parameterType="likeDTO">
+		delete from like_t
+		where prd_board_id = #{prd_board_id} and user_id = #{user_id}
+	</delete>
+</mapper>

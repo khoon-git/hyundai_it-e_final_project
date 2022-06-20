@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace ="com.hmall.team04.dao.coupon.CouponDAO">
+	
+	<!-- 유저가 가진 쿠폰 수  AND coupon_active = '1'-->
+	<select id = "getCouponCountbyUserId" resultType = "int">
+		SELECT 
+			count(coupon_id)
+			FROM USER_COUPON_DT_T
+			WHERE user_id = #{user_id}
+	</select>
+	
+	<select id="selectCouponListByUserId" parameterType="String" resultType = "CouponDTO">
+		SELECT
+		    u.user_id,
+		    c.coupon_id,
+		    c.coupon_nm,
+		    c.coupon_price,
+		    c.coupon_valid_dt,
+		    c.coupon_min_price,
+		    c.coupon_active
+		FROM user_coupon_dt_t u
+		JOIN coupon_t c ON u.coupon_id = c.coupon_id
+		WHERE u.user_id = #{user_id} AND c.coupon_active = '1'
+		ORDER BY c.coupon_price DESC
+	</select>
+	
+	<!-- 제일 많이 깎아주는 쿠폰(원) -->
+	<select id="selectCouponTop1ByUserId" parameterType="String" resultType = "CouponDTO">
+		SELECT * FROM (SELECT
+		    				u.user_id,
+		    				c.coupon_id,
+		    				c.coupon_nm,
+		    				c.coupon_price,
+		    				c.coupon_valid_dt,
+		    				c.coupon_min_price,
+		    				c.coupon_active
+					   FROM user_coupon_dt_t u
+					   JOIN coupon_t c ON u.coupon_id = c.coupon_id
+					   WHERE u.user_id = #{user_id} AND c.coupon_active = '1'
+        			   ORDER BY coupon_price DESC
+        			   )
+		WHERE ROWNUM = 1
+	</select>
+	
+	<delete id="deleteCoupon" parameterType="CouponDataDTO">
+		DELETE FROM user_coupon_dt_t
+    	WHERE user_id = #{user_id} and coupon_id = #{coupon_id}
+	</delete>
+	
+	
+	
+	
+	
+</mapper>

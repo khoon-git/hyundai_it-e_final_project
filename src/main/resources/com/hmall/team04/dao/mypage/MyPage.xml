@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.mypage.MypageDAO">
+
+	<select id="getPurchasePrd" resultType = "MypageDTO">
+	 <![CDATA[
+		SELECT 
+	        pot.PRD_ORDER_ID
+	       ,podt.PRD_ORDERDETAIL_ID 
+	       ,podt.prd_count
+	       ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+	       ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+	       ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+	       ,(SELECT 
+	         concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+	         FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+	       ,pot.ORDER_DATE
+	    FROM PRD_ORDER_T pot
+	        ,PRD_ORDERDETAIL_T podt 
+	    WHERE podt.prd_order_id = pot.prd_order_id  
+	    AND pot.ORDER_date >= TO_CHAR(SYSDATE-#{day},'YYYYMMDD')
+	    AND pot.USER_ID = #{id}
+	    ]]>
+	</select>
+	
+	<select id="">
+		SELECT 
+	        pot.PRD_ORDER_ID
+	       ,podt.PRD_ORDERDETAIL_ID 
+	       ,podt.prd_count
+	       ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+	       ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+	       ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+	       ,(SELECT 
+	         concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+	         FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+	       ,pot.ORDER_DATE
+	    FROM PRD_ORDER_T pot
+	        ,PRD_ORDERDETAIL_T podt 
+	    WHERE podt.prd_order_id = pot.prd_order_id  
+	    AND podt.prd_order_id = #{orderNo};
+	</select>
+	
+</mapper>

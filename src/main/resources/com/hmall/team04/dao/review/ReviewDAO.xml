@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.review.ReviewDAO">
+
+	<select id="getReviewListByInsdtCore" resultType="ReviewDTO">
+	<![CDATA[
+		select
+		review_id, prd_board_id, prd_id, user_id, content,star,ins_dt,file_yn ,option1,option2
+		from (
+			select  
+				rownum rn, review_id, prd_board_id, prd_id, user_id, content,star,ins_dt,file_yn ,option1,option2
+			from (
+				select rt.review_id, rt.prd_board_id, rt.prd_id, rt.user_id, rt.content, rt.star, rt.ins_dt, rt.file_yn,
+				pt.option1, pt.option2
+				from review_t rt
+				left join prd_t pt on(rt.prd_id = pt.prd_id)
+				where rt.prd_board_id = #{prd_board_id}
+				order by rt.ins_dt desc
+			)
+			where rownum <= #{pageNum} * #{amount}
+			)
+		where rn > (#{pageNum} - 1) * #{amount}
+		]]>
+	</select>
+	
+	
+	<select id="getReviewListCountCore" resultType="int">
+		select count(*)
+		from review_t
+		where prd_board_id = #{prd_board_id}
+	</select>
+	
+		
+	<!-- insert review -->
+	<insert id="insertReview" parameterType="reviewDTO">
+		insert into
+		review_t(review_id,prd_board_id,prd_id,user_id,content,star,file_yn)
+		values(review_t_review_id_seq.nextval,#{prd_board_id},#{prd_id},#{user_id},#{content},#{star},#{file_yn})
+		<selectKey keyProperty="review_id" resultType="string" order="AFTER">
+			SELECT review_t_review_id_seq.currval FROM dual
+		</selectKey>
+	</insert>
+
+	<select id="ReviewIsExist" resultType="int">
+		select count(review_id) as cnt
+		from review_t rt
+		where rt.prd_board_id=#{prd_board_id} and rt.prd_id=#{prd_id} and rt.user_id=#{user_id}
+	</select>
+
+	<select id="BoardReviewIsExist" resultType="int">
+		select count(review_id) as cnt
+		from review_t rt
+		where rt.prd_board_id=#{prd_board_id} and rt.user_id=#{user_id}
+	</select>
+
+	<select id="ReviewIsPossible" resultType="int">
+		select count(pot.prd_order_id) as cnt
+		from prd_order_t pot
+		left join prd_orderdetail_t podt on (pot.prd_order_id=podt.prd_order_id)
+		where pot.user_id=#{user_id} and podt.prd_board_id=#{prd_board_id}
+	</select>
+	
+	<!-- delete review -->
+	<delete id="deleteReview" parameterType="reviewDTO">
+		delete 
+		from review_t rt
+		WHERE rt.review_id=#{review_id}
+	</delete>
+	
+	<!-- update prd_board_t star which is belong to Star of review, when insert or delete -->
+	<update id="updateAvgStar" parameterType="reviewDTO">
+		update prd_board_t
+		set star = (select trunc(avg(star),1) as AVG from review_t where prd_board_id=#{prd_board_id})
+		where prd_board_id=#{prd_board_id}
+	</update>
+	
+</mapper>

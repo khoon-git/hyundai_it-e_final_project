@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.main.MainDAO">
+
+	<select id="getMainProductarray" resultType="ProductDTO">
+		SELECT p.prd_id, pt.PRD_NM, pt.PRD_BOARD_ID, pt.PRD_IMAGE
+		FROM PRD_T pt, (select count(p.PRD_ID) AS cnt, p.PRD_ID  
+			FROM PRD_ORDERDETAIL_T p
+			GROUP BY p.PRD_ID
+			ORDER BY cnt DESC
+			offset 0 rows fetch FIRST 5 ROWS ONLY) p
+		WHERE p.prd_id = pt.PRD_ID
+	</select>
+	
+	<select id="getMainRentalProductarray" resultType="RentalProductDTO">
+		SELECT p.PRD_ID, rt.PRD_NM, rt.PRD_IMAGE
+		FROM RENTAL_PRD_T rt, (SELECT COUNT(PRD_ID) AS cnt, PRD_ID
+			FROM RENTAL_USER_DT_T  p
+			GROUP BY p.PRD_ID
+			ORDER BY cnt DESC
+			offset 0 rows fetch FIRST 5 ROWS ONLY) p
+		WHERE rt.PRD_ID = p.PRD_ID
+	</select>
+	
+	<select id="getRentalMainRentalProductarray" resultType="RentalProductDTO">
+		SELECT p.PRD_ID, rt.PRD_NM, rt.PRD_IMAGE
+		FROM RENTAL_PRD_T rt, (SELECT COUNT(PRD_ID) AS cnt, PRD_ID
+			FROM RENTAL_USER_DT_T  p
+			GROUP BY p.PRD_ID
+			ORDER BY cnt DESC
+			offset 5 rows fetch FIRST 6 ROWS ONLY) p
+		WHERE rt.PRD_ID = p.PRD_ID
+	</select>
+	
+</mapper>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hmall.team04.dao.cs.NoticeDAO">
+	<sql id="criteria">
+		<trim prefix="(" suffix=") AND " prefixOverrides="OR">
+			<foreach item='type' collection="typeArr">
+				<trim prefix="OR">
+					<choose>
+						<when test="type == 'T'.toString()">
+							title like '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'C'.toString()">
+							content like '%'||#{keyword}||'%'
+						</when>
+						<when test="type == 'W'.toString()">
+							user_id like '%'||#{keyword}||'%'
+						</when>
+					</choose>
+				</trim>
+			</foreach>
+		</trim>
+	</sql>
+	<select id="getNoticeList" resultType="NoticeDTO">
+		select	article_id,
+			    user_id,
+			    title,
+			    content,
+			    file_yn,
+			    ins_dt,
+			    upd_dt,
+			    article_type
+		from
+				(SELECT
+					rownum as rnum,
+				    article_id,
+				    user_id,
+				    title,
+				    content,
+				    file_yn,
+				    ins_dt,
+				    upd_dt,
+				    article_type
+				FROM
+				    notice_v
+				where
+					<include refid="criteria"></include>
+			
+					<![CDATA[
+					 rownum <= #{pageNum} * #{amount}
+				ORDER BY article_id DESC)
+		where
+				rnum > (#{pageNum} - 1) * #{amount}
+		]]>
+	</select>
+	
+	<select id="getNoticeArticle" parameterType="String" resultType="NoticeDTO">
+	select a.*
+	from (
+		SELECT
+		    article_id,
+		    user_id,
+		    title,
+		    LEAD(article_id, 1) over (order by article_id desc) as next_id,
+		    LEAD(title, 1, '다음글이 없습니다') over (order by article_id desc) as next_title,
+		    LAG (article_id, 1) over (order by article_id desc) as prev_id,
+		    LAG (title, 1, '이전글이 없습니다') over (order by article_id desc) as prev_title,
+		    content,
+		    file_yn,
+		    ins_dt,
+		    upd_dt,
+		    article_type
+		FROM
+		    notice_v
+		ORDER BY article_id DESC
+		) a 
+	where a.article_id = #{articleid}
+	</select>
+	
+	<select id="getNoticeListFive" resultType="NoticeDTO">
+	<![CDATA[	
+		SELECT 
+  			 noti.title 
+ 			,noti.ins_dt
+ 			,noti.article_id
+			FROM 
+  				(SELECT 
+  					 rownum AS ROW_num
+ 					,title
+ 					,article_id 
+ 					,ins_dt
+  					FROM notice_v
+  				) noti
+  			WHERE row_num <6
+ 			ORDER BY ins_dt DESC
+	]]>
+	</select>
+	
+	<select id="getBoardCount" parameterType="Criteria" resultType="int">
+		select count(*)
+		from notice_v
+		where <include refid="criteria"></include>
+		article_id > 0
+	</select>
+	
+	<!-- <select id="getBoardListPage" parameterType="long" resultType="NoticeDTO">
+	SELECT B.*
+	FROM (SELECT  rownum AS rnum, A.*
+	      FROM	(SELECT no, title, name, regdate, readcount
+		         FROM   board
+	             ORDER  BY no DESC) A) B
+	WHERE rnum BETWEEN #{startNum} AND #{endNum}
+	</select>
+	
+	<update id="updateReadcount" parameterType="long">
+	UPDATE board SET readcount=readcount+1 WHERE no=#{no}
+	</update>
+	
+	<delete id="deleteBoard" parameterType="NoticeDTO">
+	DELETE board
+	WHERE  no=#{no} AND password=#{password}
+	</delete>
+	
+	<update id="updateBoard" parameterType="NoticeDTO">
+	UPDATE board SET
+	       title=#{title},
+	       name =#{name},
+	       content=#{content}
+	WHERE  no=#{no} AND password=#{password}
+	</update>
+	
+	<select id="getBoardCount" resultType="long">
+	SELECT count(*) as cnt 
+	FROM   board
+	</select> -->
+</mapper>

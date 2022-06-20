@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.rental.RentalProductDAO">
+	<select id="getAllRentalProductBoardList" resultType="RentalProductDTO">
+	<![CDATA[
+		select prd_id, prd_nm, prd_image, category, rental_yn
+		from rental_prd_t
+		where category = #{category} and prd_nm like '%'||#{keyword}||'%'
+		order by ins_dt desc
+		offset #{amount}*(#{pageNum} - 1) rows fetch first #{amount} rows only
+		]]>
+	</select>
+	
+	<select id="getAllRentalProductBoardListCount" resultType="int">
+	<![CDATA[
+		select count(prd_id) as count
+		from rental_prd_t
+		where category = #{category} and prd_nm like '%'||#{keyword}||'%'
+		]]>
+	</select>  
+	
+	<select id="getRentalProductBoardList" resultType="RentalProductDTO">
+	<![CDATA[
+		select prd_id, prd_nm, prd_image, category, rental_yn
+		from rental_prd_t
+		where category = #{category} and prd_nm like '%'||#{keyword}||'%' and rental_yn = '1'
+		order by ins_dt desc
+		offset #{amount}*(#{pageNum} - 1) rows fetch first #{amount} rows only
+		]]>
+	</select>
+	
+	<select id="getRentalProductBoardListCount" resultType="int">
+	<![CDATA[
+		select count(prd_id) as count
+		from rental_prd_t
+		where category = #{category} and prd_nm like '%'||#{keyword}||'%' and rental_yn = '1'
+		]]>
+	</select>
+	
+	<select id="getRentalProduct" resultType="RentalProductDTO">
+	<![CDATA[
+		select prd_id, prd_nm, prd_image, category, rental_yn, prd_price_7, prd_price_14
+		from rental_prd_t
+		where prd_id = #{prd_id}
+		]]>
+	</select>
+	
+	
+	
+</mapper>

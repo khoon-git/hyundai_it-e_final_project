@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.deliever.DelieverDAO">
+	
+	<!-- USER의 배송지 리스트를 받아옴 -->
+	<select id="selectDelieverListByUserId" parameterType="String" resultType="DelieverDTO">
+		SELECT
+			deliever_id, user_id, address_f, address_l, deliever_hp_no, receiver_nm, active_yn
+		FROM  deliever_dt_t
+		WHERE user_id = #{user_id}
+		ORDER BY active_yn DESC
+	</select>
+	
+	<!-- 배송지 삽입 -->
+	<select id="insertDeliever" parameterType="DelieverDTO" resultType="DelieverDTO">
+		INSERT INTO deliever_dt_t 
+			(DELIEVER_ID, user_id, address_f, address_l, deliever_hp_no, receiver_nm, active_yn)
+		values
+			(DELIEVER_DT_T_DELIEVER_ID_SEQ.nextval, #{user_id}, #{address_f}, #{address_l}, #{deliever_hp_no}, #{receiver_nm}, #{active_yn} )
+	</select>
+	
+	<!-- 배송지 수정 -->
+	<select id="updateDeliever" parameterType="DelieverDTO" resultType="Integer">
+		UPDATE deliever_dt_t SET
+		    address_f = #{address_f},
+		    address_l = #{address_l},
+		    deliever_hp_no = #{deliever_hp_no},
+		    receiver_nm = #{receiver_nm},
+		    active_yn = #{active_yn}
+		WHERE
+		    user_id = #{user_id} and deliever_id = #{deliever_id}
+	</select>
+	
+	<!-- 배송지 삭제 -->
+	<select id="deleteDeliever" parameterType="DelieverDTO" resultType="Integer">
+		DELETE deliever_dt_t
+		WHERE
+			user_id = #{user_id} and deliever_id = #{deliever_id}
+	</select>
+	
+	<!-- USER의 기본 배송지를 받아옴 -->
+	<select id="selectDelieverActiveYnByUserId" parameterType="String" resultType="DelieverDTO">
+		SELECT
+			deliever_id, user_id, address_f, address_l, deliever_hp_no, receiver_nm, active_yn
+		FROM  deliever_dt_t
+		WHERE user_id = #{user_id} and active_yn = 1
+		ORDER BY active_yn DESC
+	</select>
+	
+	<!-- 기본 배송지 업데이트용 -->
+    <update id="resetActiveYnByUserId" parameterType="String">
+    	UPDATE deliever_dt_t SET
+    		active_yn = '0'
+    	WHERE user_id = #{user_id} AND active_yn = '1'
+    </update>
+    
+    
+	
+</mapper>

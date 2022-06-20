@@ -1,0 +1,855 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.mypage.MypageDAO">
+
+	<resultMap id="orderMap" type="OrderDTO">
+		<id property="prd_order_id" column="prd_order_id" />
+		<result property="user_id"  column="user_id"/>
+		<result property="recipient"  column="recipient"/>
+		<result property="total_amount"  column="total_amount"/>
+		<result property="discount_amount"  column="discount_amount"/>
+		<result property="pmt_amount"  column="pmt_amount"/>
+		<result property="address_dest"  column="address_dest"/>
+		<result property="tel_no"  column="tel_no"/>
+		<result property="hp_no"  column="hp_no"/>
+		<result property="order_comment"  column="order_comment"/>
+		<result property="order_date"  column="order_date"/>
+		<result property="prd_pmt_id"  column="prd_pmt_id"/>
+		<collection property="orderDetailList" resultMap="orderDetailMap"/>
+	</resultMap>
+	
+	<resultMap id="orderDetailMap" type="OrderDetailDTO">
+		<id property="prd_orderdetail_id" column="prd_orderdetail_id"/>
+		<result property="prd_nm" column="prd_nm"/>
+		<result property="prd_price" column="prd_price"/>
+		<result property="order_flag" column="order_flag"/>
+		<result property="upload_path" column="upload_path"/>
+		<result property="all_option" column="all_option"/>
+		<result property="prd_count" column="prd_count"/>
+		<result property="prd_board_id" column="prd_board_id"/>
+		<result property="prd_id" column="prd_id"/>
+	</resultMap>
+	
+	<select id="getPurchasePrd" resultMap="orderMap">
+	 <![CDATA[
+			SELECT 
+		        pot.PRD_ORDER_ID
+		       ,podt.PRD_ORDERDETAIL_ID 
+		       ,podt.prd_count
+		       ,podt.prd_id
+		       ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+		       ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+		       ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+		       ,(SELECT 
+		         concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+		         FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+ 			   ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path 
+		       ,pot.ORDER_DATE
+		       ,podt.prd_board_id
+		       ,pot.coupon_discount_amount
+		       ,pot.reserve_discount_amount
+		    FROM PRD_ORDER_T pot
+		        ,PRD_ORDERDETAIL_T podt 
+		    WHERE podt.prd_order_id = pot.prd_order_id  
+		    AND pot.ORDER_date >= TO_CHAR(SYSDATE-#{day},'YYYYMMDD')
+		    AND pot.USER_ID = #{id}
+		    ORDER BY ORDER_DATE DESC
+	    ]]>
+	</select>
+	
+	<select id = "getPurchasePrdFlag" resultMap="orderMap">
+		<![CDATA[
+			SELECT 
+				  a.rnum
+				 ,a.prd_order_id
+				 ,a.PRD_ORDERDETAIL_ID
+				 ,a.prd_count
+				 ,a.prd_id
+				 ,a.ORDER_Flag
+				 ,a.prd_nm
+				 ,a.prd_price
+				 ,a.all_option
+				 ,a.upload_path 
+				 ,a.ORDER_DATE
+				 ,a.prd_board_id
+				 ,a.coupon_discount_amount
+				 ,a.reserve_discount_amount		
+				 FROM
+			   		 (SELECT
+			         		rownum AS rnum
+							,b.prd_order_id
+							,b.PRD_ORDERDETAIL_ID
+							,b.prd_count
+							,b.prd_id
+							,b.ORDER_Flag
+							,b.prd_nm
+							,b.prd_price
+							,b.all_option
+							,b.upload_path 
+							,b.ORDER_DATE
+							,b.prd_board_id
+							,b.coupon_discount_amount
+							,b.reserve_discount_amount
+							FROM(
+								 SELECT				
+									   pot.PRD_ORDER_ID
+									  ,podt.PRD_ORDERDETAIL_ID 
+									  ,podt.prd_count
+									  ,podt.prd_id
+									  ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+									  ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+									  ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+									  ,(SELECT 
+									          concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+									          FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+									  ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path 
+									  ,pot.ORDER_DATE
+									  ,podt.prd_board_id
+									  ,pot.coupon_discount_amount
+									  ,pot.reserve_discount_amount
+									  FROM PRD_ORDER_T pot
+									      ,PRD_ORDERDETAIL_T podt 
+									  WHERE podt.prd_order_id = pot.prd_order_id  
+									  AND pot.ORDER_date >= (SYSDATE-14)
+									  AND pot.USER_ID = #{id}  
+									  ORDER BY order_date DESC
+									) b
+							WHERE ORDER_Flag = ANY('주문접수','결제완료','상품준비중','상품발송','배송완료')
+							AND b.prd_nm LIKE  '%'||#{keyword}||'%'
+							AND rownum <= #{pageNum} * #{amount}
+					) a
+				WHERE rnum > (#{pageNum} - 1) * #{amount}
+		]]>
+	</select>
+	
+	<select id = "getPurchasePrdFlagCount" resultType="int">
+		<![CDATA[
+		SELECT
+			count(*) AS totalcount
+			FROM(
+			SELECT 
+				  a.rnum
+				 ,a.prd_order_id
+				 ,a.PRD_ORDERDETAIL_ID
+				 ,a.prd_count
+				 ,a.prd_id
+				 ,a.ORDER_Flag
+				 ,a.prd_nm
+				 ,a.prd_price
+				 ,a.all_option
+				 ,a.upload_path 
+				 ,a.ORDER_DATE
+				 ,a.prd_board_id
+				 ,a.coupon_discount_amount
+				 ,a.reserve_discount_amount		
+				 FROM
+			   		 (SELECT
+			         		rownum AS rnum
+							,b.prd_order_id
+							,b.PRD_ORDERDETAIL_ID
+							,b.prd_count
+							,b.prd_id
+							,b.ORDER_Flag
+							,b.prd_nm
+							,b.prd_price
+							,b.all_option
+							,b.upload_path 
+							,b.ORDER_DATE
+							,b.prd_board_id
+							,b.coupon_discount_amount
+							,b.reserve_discount_amount
+							FROM(
+								 SELECT				
+									   pot.PRD_ORDER_ID
+									  ,podt.PRD_ORDERDETAIL_ID 
+									  ,podt.prd_count
+									  ,podt.prd_id
+									  ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+									  ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+									  ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+									  ,(SELECT 
+									          concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+									          FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+									  ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path 
+									  ,pot.ORDER_DATE
+									  ,podt.prd_board_id
+									  ,pot.coupon_discount_amount
+									  ,pot.reserve_discount_amount
+									  FROM PRD_ORDER_T pot
+									      ,PRD_ORDERDETAIL_T podt 
+									  WHERE podt.prd_order_id = pot.prd_order_id  
+									  AND pot.ORDER_date >= (SYSDATE-14)
+									  AND pot.USER_ID = #{id}  
+									  ORDER BY order_date DESC
+									) b
+							WHERE ORDER_Flag = ANY('주문접수','결제완료','상품준비중','상품발송','배송완료')
+							AND b.prd_nm LIKE  '%'||#{keyword}||'%'
+							AND rownum <= #{pageNum} * #{amount}
+					) a
+				WHERE rnum > (#{pageNum} - 1) * #{amount}
+			)
+		]]>
+	</select>
+	
+	
+	<select id = "getPurchasePrdFlagByDate" resultMap="orderMap">
+			<![CDATA[
+						SELECT 
+						  a.rnum
+						 ,a.prd_order_id
+						 ,a.PRD_ORDERDETAIL_ID
+						 ,a.prd_count
+						 ,a.prd_id
+						 ,a.ORDER_Flag
+						 ,a.prd_nm
+						 ,a.prd_price
+						 ,a.all_option
+						 ,a.upload_path 
+						 ,a.ORDER_DATE
+						 ,a.prd_board_id
+						 ,a.coupon_discount_amount
+						 ,a.reserve_discount_amount		
+						 FROM
+					   		 (SELECT
+					         		rownum AS rnum
+									,b.prd_order_id
+									,b.PRD_ORDERDETAIL_ID
+									,b.prd_count
+									,b.prd_id
+									,b.ORDER_Flag
+									,b.prd_nm
+									,b.prd_price
+									,b.all_option
+									,b.upload_path 
+									,b.ORDER_DATE
+									,b.prd_board_id
+									,b.coupon_discount_amount
+									,b.reserve_discount_amount
+									FROM(
+										 SELECT				
+											   pot.PRD_ORDER_ID
+											  ,podt.PRD_ORDERDETAIL_ID 
+											  ,podt.prd_count
+											  ,podt.prd_id
+											  ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+											  ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+											  ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+											  ,(SELECT 
+											          concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+											          FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+											  ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path  
+											  ,pot.ORDER_DATE
+											  ,podt.prd_board_id
+											  ,pot.coupon_discount_amount
+											  ,pot.reserve_discount_amount
+											  FROM PRD_ORDER_T pot
+											      ,PRD_ORDERDETAIL_T podt 
+											  WHERE podt.prd_order_id = pot.prd_order_id  												  
+											  AND TO_CHAR(pot.ORDER_date,'YYYYMMDD') BETWEEN #{ordStrtDt} AND #{ordEndDt}
+											  AND pot.USER_ID =#{id}   
+											  ORDER BY order_date DESC
+											) b
+									WHERE ORDER_Flag = ANY('주문접수','결제완료','상품준비중','상품발송','배송완료')
+									AND b.prd_nm LIKE '%'||#{keyword}||'%'
+									AND rownum <= #{pageNum} * #{amount}
+							) a
+						WHERE rnum > (#{pageNum} - 1) * #{amount}
+					]]>
+	
+	</select>
+	
+	<select id= "getPurchasePrdFlagByDateTotalCount" resultType ="int">
+				<![CDATA[
+						SELECT 
+						   count(*) AS totalcount
+						   FROM(
+								SELECT 
+								  a.rnum
+								 ,a.prd_order_id
+								 ,a.PRD_ORDERDETAIL_ID
+								 ,a.prd_count
+								 ,a.ORDER_Flag
+								 ,a.prd_nm
+								 ,a.prd_price
+								 ,a.all_option
+								 ,a.upload_path 
+								 ,a.ORDER_DATE
+								 ,a.prd_board_id
+								 ,a.coupon_discount_amount
+								 ,a.reserve_discount_amount		
+								 FROM
+							   		 (SELECT
+							         		rownum AS rnum
+											,b.prd_order_id
+											,b.PRD_ORDERDETAIL_ID
+											,b.prd_count
+											,b.ORDER_Flag
+											,b.prd_nm
+											,b.prd_price
+											,b.all_option
+											,b.upload_path 
+											,b.ORDER_DATE
+											,b.prd_board_id
+											,b.coupon_discount_amount
+											,b.reserve_discount_amount
+											FROM(
+												 SELECT				
+													   pot.PRD_ORDER_ID
+													  ,podt.PRD_ORDERDETAIL_ID 
+													  ,podt.prd_count
+													  ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+													  ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+													  ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+													  ,(SELECT 
+													          concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+													          FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+													  ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path 
+													  ,pot.ORDER_DATE
+													  ,podt.prd_board_id
+													  ,pot.coupon_discount_amount
+													  ,pot.reserve_discount_amount
+													  FROM PRD_ORDER_T pot
+													      ,PRD_ORDERDETAIL_T podt 
+													  WHERE podt.prd_order_id = pot.prd_order_id  												  
+													  AND TO_CHAR(pot.ORDER_date,'YYYYMMDD') BETWEEN #{ordStrtDt} AND #{ordEndDt}
+													  AND pot.USER_ID =#{id}   
+													  ORDER BY order_date DESC
+													) b
+											WHERE ORDER_Flag = ANY('주문접수','결제완료','상품준비중','상품발송','배송완료')
+											AND b.prd_nm LIKE  '%'||#{keyword}||'%'
+											AND rownum <= #{pageNum} * #{amount}
+									) a
+							   WHERE rnum > (#{pageNum} - 1) * #{amount}
+							)
+						 ]]>
+	</select>
+	
+	
+	
+	
+	
+	<select id ="getPopupDetailbyOrderDetailId" resultType ="OrderDetailDTO">
+		SELECT 
+			  podt.prd_board_id
+			,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+			,podt.PRD_ORDERDETAIL_ID 
+			,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path 
+			FROM PRD_ORDER_T pot 
+				,PRD_ORDERDETAIL_T podt 
+			WHERE podt.prd_order_id = pot.prd_order_id 
+			AND podt.PRD_ORDERDETAIL_ID = #{detailid}
+	</select>
+	
+	
+	<update id = "updateflagR" parameterType="OrderDetailDTO">
+		UPDATE PRD_ORDERDETAIL_T set order_flag = #{order_flag}
+		where PRD_ORDERDETAIL_ID = #{prd_orderdetail_id}	
+	</update>
+	
+	
+	<select id ="getCountStep1" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step1
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= (SYSDATE-60)
+			AND PODT.order_flag = 'STEP1'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	
+	<select id ="getCountStep2" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step2
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= TO_CHAR(SYSDATE-60,'YYYYMMDD')
+			AND PODT.order_flag = 'STEP2'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	
+	<select id ="getCountStep3" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step3
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= TO_CHAR(SYSDATE-60,'YYYYMMDD')
+			AND PODT.order_flag = 'STEP3'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	
+	<select id ="getCountStep4" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step4
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= TO_CHAR(SYSDATE-60,'YYYYMMDD')
+			AND PODT.order_flag = 'STEP4'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	<select id ="getCountStep5" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step5
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= TO_CHAR(SYSDATE-60,'YYYYMMDD')
+			AND PODT.order_flag = 'STEP5'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	
+	<!-- email 중복 확인 (함수) -->
+    <select id="checkUserEmailYn" resultType="String">
+        <![CDATA[
+            SELECT 
+                fn_check_user_email_not_me_yn(#{email}, #{userid}) AS RESULT_VALUE
+            FROM DUAL
+        ]]>
+    </select>
+	
+	
+	
+	
+	<select id ="getCountCstep" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step1
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= TO_CHAR(SYSDATE-60,'YYYYMMDD')
+			AND PODT.order_flag = 'CSTEP'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	
+	<select id ="getCountRstep1" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step2
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= TO_CHAR(SYSDATE-60,'YYYYMMDD')
+			AND PODT.order_flag = 'RSTEP1'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	
+	<select id ="getCountRstep2" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step3
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= TO_CHAR(SYSDATE-60,'YYYYMMDD')
+			AND PODT.order_flag = 'RSTEP2'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	
+	<select id ="getCountEstep1" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step4
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= TO_CHAR(SYSDATE-60,'YYYYMMDD')
+			AND PODT.order_flag = 'ESTEP1'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	
+	
+	<select id ="getCountEstep2" resultType = "int">
+		<![CDATA[	
+			SELECT 
+		  	count(podt.PRD_ORDERDETAIL_ID) AS step5
+			FROM PRD_ORDERDETAIL_T podt 
+		 		,PRD_ORDER_T pot
+			WHERE podt.prd_order_id = pot.prd_order_id  
+			AND pot.ORDER_date >= TO_CHAR(SYSDATE-60,'YYYYMMDD')
+			AND PODT.order_flag = 'ESTEP2'
+			AND pot.user_id = #{id}
+		]]>
+	</select>
+	
+	
+		<select id = "getCrePrdFlag" resultMap="orderMap">
+		<![CDATA[
+			SELECT 
+				  a.rnum
+				 ,a.prd_order_id
+				 ,a.PRD_ORDERDETAIL_ID
+				 ,a.prd_count
+				 ,a.prd_id
+				 ,a.ORDER_Flag
+				 ,a.prd_nm
+				 ,a.prd_price
+				 ,a.all_option
+				 ,a.upload_path 
+				 ,a.ORDER_DATE
+				 ,a.prd_board_id
+				 ,a.coupon_discount_amount
+				 ,a.reserve_discount_amount		
+				 FROM
+			   		 (SELECT
+			         		rownum AS rnum
+							,b.prd_order_id
+							,b.PRD_ORDERDETAIL_ID
+							,b.prd_count
+							,b.prd_id
+							,b.ORDER_Flag
+							,b.prd_nm
+							,b.prd_price
+							,b.all_option
+							,b.upload_path 
+							,b.ORDER_DATE
+							,b.prd_board_id
+							,b.coupon_discount_amount
+							,b.reserve_discount_amount
+							FROM(
+								 SELECT				
+									   pot.PRD_ORDER_ID
+									  ,podt.PRD_ORDERDETAIL_ID 
+									  ,podt.prd_count
+									  ,podt.prd_id
+									  ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+									  ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+									  ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+									  ,(SELECT 
+									          concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+									          FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+									  ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path  
+									  ,pot.ORDER_DATE
+									  ,podt.prd_board_id
+									  ,pot.coupon_discount_amount
+									  ,pot.reserve_discount_amount
+									  FROM PRD_ORDER_T pot
+									      ,PRD_ORDERDETAIL_T podt 
+									  WHERE podt.prd_order_id = pot.prd_order_id  
+									  AND pot.ORDER_date >= TO_CHAR(SYSDATE-14,'YYYYMMDD')
+									  AND pot.USER_ID = #{id}  
+									  ORDER BY order_date DESC
+									) b
+							WHERE ORDER_Flag = ANY('주문취소','반품접수','반품완료','교환접수','교환완료')
+							AND b.prd_nm LIKE  '%'||#{keyword}||'%'
+							AND rownum <= #{pageNum} * #{amount}
+					) a
+				WHERE rnum > (#{pageNum} - 1) * #{amount}
+		]]>
+	</select>
+	
+	<select id = "getCrePrdFlagCount" resultType="int">
+		<![CDATA[
+		SELECT
+			count(*) AS totalcount
+			FROM(
+			SELECT 
+				  a.rnum
+				 ,a.prd_order_id
+				 ,a.PRD_ORDERDETAIL_ID
+				 ,a.prd_count
+				 ,a.prd_id
+				 ,a.ORDER_Flag
+				 ,a.prd_nm
+				 ,a.prd_price
+				 ,a.all_option
+				 ,a.upload_path 
+				 ,a.ORDER_DATE
+				 ,a.prd_board_id
+				 ,a.coupon_discount_amount
+				 ,a.reserve_discount_amount		
+				 FROM
+			   		 (SELECT
+			         		rownum AS rnum
+							,b.prd_order_id
+							,b.PRD_ORDERDETAIL_ID
+							,b.prd_count
+							,b.prd_id
+							,b.ORDER_Flag
+							,b.prd_nm
+							,b.prd_price
+							,b.all_option
+							,b.upload_path 
+							,b.ORDER_DATE
+							,b.prd_board_id
+							,b.coupon_discount_amount
+							,b.reserve_discount_amount
+							FROM(
+								 SELECT				
+									   pot.PRD_ORDER_ID
+									  ,podt.PRD_ORDERDETAIL_ID 
+									  ,podt.prd_count
+									  ,podt.prd_id
+									  ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+									  ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+									  ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+									  ,(SELECT 
+									          concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+									          FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+									  ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path  
+									  ,pot.ORDER_DATE
+									  ,podt.prd_board_id
+									  ,pot.coupon_discount_amount
+									  ,pot.reserve_discount_amount
+									  FROM PRD_ORDER_T pot
+									      ,PRD_ORDERDETAIL_T podt 
+									  WHERE podt.prd_order_id = pot.prd_order_id  
+									  AND pot.ORDER_date >= TO_CHAR(SYSDATE-14,'YYYYMMDD')
+									  AND pot.USER_ID = #{id}  
+									  ORDER BY order_date DESC
+									) b
+							WHERE ORDER_Flag = ANY('주문취소','반품접수','반품완료','교환접수','교환완료')
+							AND b.prd_nm LIKE  '%'||#{keyword}||'%'
+							AND rownum <= #{pageNum} * #{amount}
+					) a
+				WHERE rnum > (#{pageNum} - 1) * #{amount}
+			)
+		]]>
+	</select>
+	
+	
+	<select id = "getCrePrdFlagByDate" resultMap="orderMap">
+			<![CDATA[
+						SELECT 
+						  a.rnum
+						 ,a.prd_order_id
+						 ,a.PRD_ORDERDETAIL_ID
+						 ,a.prd_count
+						 ,a.prd_id
+						 ,a.ORDER_Flag
+						 ,a.prd_nm
+						 ,a.prd_price
+						 ,a.all_option
+						 ,a.upload_path 
+						 ,a.ORDER_DATE
+						 ,a.prd_board_id
+						 ,a.coupon_discount_amount
+						 ,a.reserve_discount_amount		
+						 FROM
+					   		 (SELECT
+					         		rownum AS rnum
+									,b.prd_order_id
+									,b.PRD_ORDERDETAIL_ID
+									,b.prd_count
+									,b.prd_id
+									,b.ORDER_Flag
+									,b.prd_nm
+									,b.prd_price
+									,b.all_option
+									,b.upload_path 
+									,b.ORDER_DATE
+									,b.prd_board_id
+									,b.coupon_discount_amount
+									,b.reserve_discount_amount
+									FROM(
+										 SELECT				
+											   pot.PRD_ORDER_ID
+											  ,podt.PRD_ORDERDETAIL_ID 
+											  ,podt.prd_count
+											  ,podt.prd_id
+											  ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+											  ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+											  ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+											  ,(SELECT 
+											          concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+											          FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+											  ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path  
+											  ,pot.ORDER_DATE
+											  ,podt.prd_board_id
+											  ,pot.coupon_discount_amount
+											  ,pot.reserve_discount_amount
+											  FROM PRD_ORDER_T pot
+											      ,PRD_ORDERDETAIL_T podt 
+											  WHERE podt.prd_order_id = pot.prd_order_id  												  
+											  AND TO_CHAR(pot.ORDER_date,'YYYYMMDD') BETWEEN #{ordStrtDt} AND #{ordEndDt}
+											  AND pot.USER_ID =#{id}   
+											  ORDER BY order_date DESC
+											) b
+									WHERE ORDER_Flag = ANY('주문취소','반품접수','반품완료','교환접수','교환완료')
+									AND b.prd_nm LIKE '%'||#{keyword}||'%'
+									AND rownum <= #{pageNum} * #{amount}
+							) a
+						WHERE rnum > (#{pageNum} - 1) * #{amount}
+					]]>
+	
+	</select>
+	
+	<select id= "getCrePrdFlagByDateTotalCount" resultType ="int">
+				<![CDATA[
+						SELECT 
+						   count(*) AS totalcount
+						   FROM(
+								SELECT 
+								  a.rnum
+								 ,a.prd_order_id
+								 ,a.PRD_ORDERDETAIL_ID
+								 ,a.prd_count
+								 ,a.ORDER_Flag
+								 ,a.prd_nm
+								 ,a.prd_price
+								 ,a.all_option
+								 ,a.upload_path 
+								 ,a.ORDER_DATE
+								 ,a.prd_board_id
+								 ,a.coupon_discount_amount
+								 ,a.reserve_discount_amount		
+								 FROM
+							   		 (SELECT
+							         		rownum AS rnum
+											,b.prd_order_id
+											,b.PRD_ORDERDETAIL_ID
+											,b.prd_count
+											,b.ORDER_Flag
+											,b.prd_nm
+											,b.prd_price
+											,b.all_option
+											,b.upload_path 
+											,b.ORDER_DATE
+											,b.prd_board_id
+											,b.coupon_discount_amount
+											,b.reserve_discount_amount
+											FROM(
+												 SELECT				
+													   pot.PRD_ORDER_ID
+													  ,podt.PRD_ORDERDETAIL_ID 
+													  ,podt.prd_count
+													  ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+													  ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+													  ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+													  ,(SELECT 
+													          concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+													          FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+													  ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path  
+													  ,pot.ORDER_DATE
+													  ,podt.prd_board_id
+													  ,pot.coupon_discount_amount
+													  ,pot.reserve_discount_amount
+													  FROM PRD_ORDER_T pot
+													      ,PRD_ORDERDETAIL_T podt 
+													  WHERE podt.prd_order_id = pot.prd_order_id  												  
+													  AND TO_CHAR(pot.ORDER_date,'YYYYMMDD') BETWEEN #{ordStrtDt} AND #{ordEndDt}
+													  AND pot.USER_ID =#{id}   
+													  ORDER BY order_date DESC
+													) b
+											WHERE ORDER_Flag = ANY('주문취소','반품접수','반품완료','교환접수','교환완료')
+											AND b.prd_nm LIKE  '%'||#{keyword}||'%'
+											AND rownum <= #{pageNum} * #{amount}
+									) a
+							   WHERE rnum > (#{pageNum} - 1) * #{amount}
+							)
+						 ]]>
+	</select>
+
+	<select id = "getRentalList" resultType = "RentalUserDTO">
+			<![CDATA[	
+					SELECT
+						 b.prd_id
+						,b.prd_nm
+						,b.upload_path
+						,b.user_id
+						,b.sdate
+						,b.edate
+						,b.rental_flag
+						FROM(
+							SELECT
+							  a.prd_id
+							 ,(SELECT prd_nm FROM RENTAL_PRD_T  WHERE prd_id = a.prd_id) AS prd_nm
+							 ,(select PRD_IMAGE FROM RENTAL_PRD_T where prd_id = a.prd_id) as upload_path
+							 ,a.user_id
+							 ,a.sdate
+							 ,a.edate
+							 ,(SELECT 
+							 	dtl_nm 
+							 	FROM code_dtl_t 
+							 	WHERE dtl_cd = rental_flag
+							 	AND grp_cd = 'RENTAL_FLAG') AS rental_flag
+							FROM RENTAL_USER_DT_T a
+							WHERE user_id = #{id}
+							AND rental_flag = ANY('STEP1','STEP2','STEP3')
+							ORDER BY sdate
+							) b
+						WHERE b.prd_nm LIKE  '%'||#{keyword}||'%'
+					]]>	
+  </select>
+	
+	<select id="getRentalCompPrdByDate" resultType="RentalOrderDTO">
+		SELECT
+				rpt.PRD_ID
+				,rpt.PRD_NM
+				,rpt.PRD_IMAGE
+				,rpt.RENTAL_YN
+				,rudt.SDATE
+				,rudt.EDATE
+				,(SELECT DTL_NM FROM CODE_DTL_T cdt WHERE DTL_CD = rudt.RENTAL_FLAG AND GRP_CD = 'RENTAL_FLAG') AS rental_flag
+		FROM RENTAL_USER_DT_T rudt,
+			RENTAL_PRD_T rpt
+		WHERE rudt.PRD_ID = rpt.PRD_ID
+		AND rudt.user_id = #{id}
+		AND rudt.RENTAL_FLAG = 'STEP4'
+		AND TO_CHAR(rudt.SDATE,'YYYYMMDD') BETWEEN #{ordStrtDt} AND #{ordEndDt}
+		AND rpt.prd_nm like '%'||#{keyword}||'%'
+		order by rudt.EDATE desc
+		offset #{amount}*(#{pageNum} - 1) rows fetch first #{amount} rows only
+		
+	</select>
+	
+	<select id="getRentalCompPrdCountByDate" resultType="int">
+	SELECT count(*) from (
+		SELECT
+				rpt.PRD_ID
+				,rpt.PRD_NM
+				,rpt.PRD_IMAGE
+				,rpt.RENTAL_YN
+				,rudt.SDATE
+				,rudt.EDATE
+				,(SELECT DTL_NM FROM CODE_DTL_T cdt WHERE DTL_CD = rudt.RENTAL_FLAG AND GRP_CD = 'RENTAL_FLAG') AS rental_flag
+		FROM RENTAL_USER_DT_T rudt,
+			RENTAL_PRD_T rpt
+		WHERE rudt.PRD_ID = rpt.PRD_ID
+		AND rudt.user_id = #{id}
+		AND rudt.RENTAL_FLAG = 'STEP4'
+		AND TO_CHAR(rudt.SDATE,'YYYYMMDD') BETWEEN #{ordStrtDt} AND #{ordEndDt}
+		AND rpt.prd_nm like '%'||#{keyword}||'%'
+		order by rudt.EDATE desc
+		offset #{amount}*(#{pageNum} - 1) rows fetch first #{amount} rows only
+		)
+	</select>
+
+	<select id="getUserGrade" resultType="int">
+		select grade
+		from user_grade_t
+		where user_id = #{userid}
+	</select>
+	
+	<select id="getRentalProduct" resultType="RentalUserDTO">
+		select prd_id, prd_nm, prd_image as upload_path
+		from rental_prd_t
+		where prd_id = #{rentalorderNo}
+	</select>
+	
+	<select id="rentalupdateFlagR">
+		UPDATE RENTAL_USER_DT_T set rental_flag = 'STEP3'
+		where PRD_ID = #{prd_id} and user_id = #{userid}
+	</select>
+	
+</mapper>

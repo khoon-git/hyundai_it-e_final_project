@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.product.ProductBoardDAO">
+
+	<!-- index.jsp와 관련된 prd_board 표시 기본형 -->
+	<resultMap id="ProductBoardResult" type="ProductBoardDTO">
+		<result property="content" column="content" jdbcType="CLOB" javaType="java.lang.String" />
+	</resultMap>
+
+	<!-- 
+	<select id="getProductBoardList" resultType="ProductBoardDTO" resultMap="ProductBoardResult">
+		select
+		prd_board_id, discount_rate, price, title, content, score, category, brand
+		from prd_board_t
+		order by prd_board_id
+	</select>
+	 -->
+	 
+	 <select id="getProductBoardListByKeyword" resultType="ProductBoardDTO">
+	<![CDATA[
+		select
+		prd_board_id, discount_rate, price, title, prd_board_img 
+		from (
+			select  
+				rownum rn, prd_board_id, discount_rate, price, title, prd_board_img 
+			from (
+				select prd_board_id, discount_rate, price, title, category, prd_board_img
+				from prd_board_t
+				where title like '%'||#{keyword}||'%'
+				order by ins_dt desc
+			)
+			where rownum <= #{pageNum} * #{amount}
+			)
+		where rn > (#{pageNum} - 1) * #{amount}
+		]]>
+	</select>
+	 
+	<select id="getProductBoardListByInsdt" resultType="ProductBoardDTO">
+	<![CDATA[
+		select
+		prd_board_id, discount_rate, price, title, prd_board_img 
+		from (
+			select  
+				rownum rn, prd_board_id, discount_rate, price, title, prd_board_img 
+			from (
+				select prd_board_id, discount_rate, price, title, category, prd_board_img
+				from prd_board_t
+				where category = #{categoryCode}
+				order by ins_dt desc
+			)
+			where rownum <= #{pageNum} * #{amount}
+			)
+		where rn > (#{pageNum} - 1) * #{amount}
+		]]>
+	</select>
+	
+	<select id="getProductBoardListByHighPrice" resultType="ProductBoardDTO">
+	<![CDATA[
+		select
+		prd_board_id, discount_rate, price, title, prd_board_img 
+		from (
+			select  
+				rownum rn, prd_board_id, discount_rate, price, title, prd_board_img 
+			from (
+				select prd_board_id, discount_rate, price, title, category, prd_board_img
+				from prd_board_t
+				where category = #{categoryCode}
+				order by (price * (1-(DISCOUNT_RATE / 100))) desc  
+			)
+			where rownum <= #{pageNum} * #{amount}
+			)
+		where rn > (#{pageNum} - 1) * #{amount}
+		]]>
+	</select>
+	
+	<select id="getProductBoardListByRowPrice" resultType="ProductBoardDTO">
+	<![CDATA[
+		select
+		prd_board_id, discount_rate, price, title, prd_board_img 
+		from (
+			select  
+				rownum rn, prd_board_id, discount_rate, price, title, prd_board_img 
+			from (
+				select prd_board_id, discount_rate, price, title, category, prd_board_img 
+				from prd_board_t 
+				where category = #{categoryCode}
+				order by (price * (1-(DISCOUNT_RATE / 100)))
+			)
+			where rownum <= #{pageNum} * #{amount}
+			)
+		where rn > (#{pageNum} - 1) * #{amount}
+		]]>
+	</select>
+
+	<!-- 상품보드와 관련된 prd_board 표시 기본형 -->
+	<resultMap type="ProductBoardDTO" id="productBoardDTO">
+		<result property="prd_board_id" column="prd_board_id"/>
+		<result property="discount_rate" column="discount_rate"/>
+		<result property="price" column="price"/>
+		<result property="title" column="title"/>
+		<result property="content" column="content"/>
+		<result property="star" column="star"/>
+		<result property="prd_board_img" column="prd_board_img"/>
+		<collection property="productList" resultMap="ProductMap"></collection>
+	</resultMap>
+	
+	<resultMap type="ProductDTO" id="ProductMap">
+		<result property="prd_id" column="prd_id"/>
+		<result property="prd_nm" column="prd_nm"/>
+		<result property="prd_price" column="prd_price"/>
+		<result property="amount" column="amount"/>
+		<result property="prd_image" column="prd_image"/>
+		<result property="option1" column="option1"/>
+		<result property="option1" column="option2"/>
+	</resultMap>
+	
+	<select id="getProductBoard" parameterType="String" resultMap="productBoardDTO">
+		select
+		pbt.prd_board_id, pbt.discount_rate, pbt.price, pbt.title, pbt.content, pbt.star, pbt.category, pbt.brand, pbt.prd_board_img,
+		pt.PRD_ID, pt.prd_nm, pt.prd_price, pt.amount, pt.option1, pt.option2, pt.prd_image 
+		from prd_board_t pbt
+		LEFT JOIN prd_t pt
+		on (pbt.PRD_BOARD_ID=pt.PRD_BOARD_ID)
+		WHERE pbt.prd_board_id=#{prd_board_id} and pt.amount > 0
+		order by pt.prd_id
+	</select>
+	
+	<select id="getProductListCount" resultType="int">
+		select count(*)
+		from prd_board_t
+		where category = #{category}
+	</select>
+	
+	<select id="getProductListCountByKeyword" resultType="int">
+		select count(*)
+		from prd_board_t
+		where title like '%'||#{keyword}||'%'
+	</select>
+	
+</mapper>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+       "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+
+	<!-- index 화면, 첫페이지 -->
+	<definition name="index" template="/WEB-INF/views/template/base.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/home.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+	
+	<!-- category 구체화 페이지, 중분류 -->
+	<definition name="category" template="/WEB-INF/views/template/category.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="side" value="/WEB-INF/views/layout/category_side.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/category/category.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+	
+	<!-- category 구체화 페이지, 소분류 -->
+	<definition name="category2" template="/WEB-INF/views/template/category2.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/category/category2.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+		
+	<!-- product_board 페이지 -->
+	<definition name="product.*" template="/WEB-INF/views/template/product.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/product/{1}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+		
+	<!-- 장바구니 페이지 -->
+	<definition name="cart.*" template="/WEB-INF/views/template/cart.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/cart/{1}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+		
+	<!-- 주문결제 페이지 -->
+	<definition name="order.*" template="/WEB-INF/views/template/order.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/order/{1}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+		
+	<!-- 대여주문결제 페이지 -->
+	<definition name="rental.*" template="/WEB-INF/views/template/order.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/rental/{1}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+		
+	<!-- review 관련 페이지 -->
+		<definition name="review.*" template="/WEB-INF/views/template/review.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/review/{1}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 회원가입 -->
+	<definition name="user.signup.*" template="/WEB-INF/views/template/signUpLayout.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/user/signup/{1}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 아이디찾기, 비밀번호찾기 -->
+	<definition name="user.find.*" template="/WEB-INF/views/template/findLayout.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/user/find/{1}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 일반 로그인 (팝업 x) -->
+	<definition name="user.login.login" template="/WEB-INF/views/template/login.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/user/login/login.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+
+	<!-- 고객센터 -->
+	<definition name="cs.*.*" template="/WEB-INF/views/template/basecs.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/cs/{1}/{2}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+		<put-attribute name="leftsidebar" value="/WEB-INF/views/cs/leftsidebar.jsp" />
+	</definition>
+	
+	<!-- 마이페이지 -->
+	<definition name="mypage.*.*" template="/WEB-INF/views/template/mypage.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/mypage/{1}/{2}.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+		<put-attribute name="leftsidebar" value="/WEB-INF/views/mypage/leftsidebar.jsp" />
+		<put-attribute name="quickmenu" value="/WEB-INF/views/mypage/quickmenu.jsp" />
+	</definition>
+	
+	<!-- 상품리스트페이지 -->
+	<definition name="product.productListBoard" template="/WEB-INF/views/template/productList.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/product/productListBoard.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 대여리스트페이지 -->
+	<definition name="rental.rentalProductListBoard" template="/WEB-INF/views/template/rentalList.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/rental/rentalProductListBoard.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 대여메인페이지 -->
+	<definition name="rental.rentalProductMain" template="/WEB-INF/views/template/rentalList.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/rental/rentalProductMain.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 대여상세페이지 -->
+	<definition name="rental.rentalProductBoard" template="/WEB-INF/views/template/rentalBoard.jsp">
+		<put-attribute name="header" value="/WEB-INF/views/layout/header.jsp" />
+		<put-attribute name="body" value="/WEB-INF/views/rental/rentalProductBoard.jsp" />
+		<put-attribute name="footer" value="/WEB-INF/views/layout/footer.jsp" />
+	</definition>
+
+</tiles-definitions>

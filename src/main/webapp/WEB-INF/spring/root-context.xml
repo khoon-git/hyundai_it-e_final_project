@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd">
+   
+   <!-- config파일 자동 로드 location="classpath:database.properties"  /!-->
+   <context:property-placeholder location="classpath:/database/config.properties" /> 
+   
+   <!-- Root Context: defines shared resources visible to all other web components -->
+   <bean 
+      id="dataSource"
+      class="com.zaxxer.hikari.HikariDataSource"
+      p:username="${spring.datasource.username}"
+      p:password="${spring.datasource.password}"
+      p:jdbcUrl="${spring.datasource.url}"
+      p:driverClassName="${spring.datasource.driverClassName}"
+      p:maximumPoolSize="2" />
+
+	<bean id="team04SqlSession" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 여러가지 타입 얼라이어스를 설정해줘야 나중에 패키지 여러개를 사용할때 IMsDAO안에서 resulttype에 대해서 클래스명으로 
+			설정가능 -->
+		 <property name="typeAliasesPackage" value="com.hmall.team04.dto" /> 
+	</bean>
+
+	<!-- DAO의 구현체를 자동으로 만들어 줌 
+	<bean id="boardDAO"	class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="sqlSessionFactory" ref="boardSqlSession" />
+		<property name="mapperInterface" value="com.hmall.team04.dao.BoardDAO" />
+	</bean>	
+	-->
+
+	<bean id="qnaDAO"	class="org.mybatis.spring.mapper.MapperFactoryBean">
+		<property name="sqlSessionFactory" ref="team04SqlSession" />
+		<property name="mapperInterface" value="com.hmall.team04.dao.cs.QnaDAO" />
+	</bean>	
+
+   <bean id="noticeDAO" class="org.mybatis.spring.mapper.MapperFactoryBean">
+      <property name="sqlSessionFactory" ref="team04SqlSession" />
+      <property name="mapperInterface" value="com.hmall.team04.dao.cs.NoticeDAO" />
+   </bean>
+   
+   <bean id="faqDAO"
+      class="org.mybatis.spring.mapper.MapperFactoryBean">
+      <property name="sqlSessionFactory" ref="team04SqlSession"></property>
+      <property name="mapperInterface" value="com.hmall.team04.dao.cs.FaqDAO"></property>
+   </bean>   
+
+   <bean id="userDAO" class="org.mybatis.spring.mapper.MapperFactoryBean">
+      <property name="sqlSessionFactory" ref="team04SqlSession" />
+      <property name="mapperInterface" value="com.hmall.team04.dao.user.UserDAO" />
+   </bean>   
+   
+   
+   <bean id="categoryDAO" class="org.mybatis.spring.mapper.MapperFactoryBean">
+      <property name="sqlSessionFactory" ref="team04SqlSession" />
+      <property name="mapperInterface" value="com.hmall.team04.dao.category.CategoryDAO" />
+   </bean>
+   
+   <bean id = "couponDAO" class ="org.mybatis.spring.mapper.MapperFactoryBean">
+   		<property name = "sqlSessionFactory" ref="team04SqlSession"/>
+   		<property name = "mapperInterface" value = "com.hmall.team04.dao.coupon.CouponDAO"/>
+   </bean>
+   
+   <bean id = "reserveDAO" class ="org.mybatis.spring.mapper.MapperFactoryBean">
+   		<property name = "sqlSessionFactory" ref="team04SqlSession"/>
+   		<property name = "mapperInterface" value = "com.hmall.team04.dao.reserve.ReserveDAO"/>
+   </bean>
+   
+   
+   <bean id = "balanceDAO" class ="org.mybatis.spring.mapper.MapperFactoryBean">
+   		<property name = "sqlSessionFactory" ref="team04SqlSession"/>
+   		<property name = "mapperInterface" value = "com.hmall.team04.dao.balance.BalanceDAO"/>
+   </bean>
+   
+   <bean id = "mypageDAO" class ="org.mybatis.spring.mapper.MapperFactoryBean">
+   		<property name = "sqlSessionFactory" ref="team04SqlSession"/>
+   		<property name = "mapperInterface" value = "com.hmall.team04.dao.mypage.MypageDAO"/>
+   </bean>
+   
+    <mybatis-spring:scan base-package="com.hmall.team04.dao" />
+     
+   <!-- transaction setting start -->
+   <aop:aspectj-autoproxy />   
+   <tx:annotation-driven />
+   <bean id="transactionManager" 
+      class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+   <!-- transaction setting end -->
+   
+</beans>

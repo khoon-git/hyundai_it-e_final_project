@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.cart.CartDAO">
+	
+	<select id="getCartList" parameterType="String"  resultType="CartDTO">
+		select pct.prd_cart_id, pct.user_id, pct.prd_id, pct.cart_amount,
+		pt.prd_nm, pt.amount,pt.prd_price, pt.prd_board_id,pt.prd_image, pt.option1, pt.option2
+		from prd_cart_t pct
+		left join prd_t pt on (pct.prd_id=pt.prd_id)
+		where pct.user_id=#{user_id}
+	</select>
+	
+	<!-- delete Reply -->
+	<delete id="deleteCart" parameterType="CartDTO">
+		delete prd_cart_t
+		where prd_cart_id=#{prd_cart_id}
+	</delete>
+	
+	<!-- update Reply -->
+	<update id="updatePrdCartQty" parameterType="CartDTO">
+		update prd_cart_t
+		set cart_amount = #{cart_amount}
+		where prd_cart_id=#{prd_cart_id}
+	</update>
+
+	<!-- insert Article -->
+	<insert id="InsertPrdCart" parameterType="CartDTO">
+		insert into
+		prd_cart_t(prd_cart_id, user_id, prd_id, cart_amount)
+		values(prd_cart_t_prd_cart_id_seq.nextval,#{user_id},#{prd_id},#{cart_amount})
+	</insert>
+
+</mapper>

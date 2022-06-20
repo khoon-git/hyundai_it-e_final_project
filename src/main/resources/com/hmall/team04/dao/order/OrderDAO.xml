@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.order.OrderDAO">
+
+	<select id="getOrderCompleteList" parameterType="OrderCompleteDTO" resultType="OrderCompleteDTO">
+	select 
+	    a.prd_order_id,
+	    a.user_id,
+	    a.recipient,
+	    a.total_amount,
+	    a.discount_amount,
+	    a.pmt_amount,
+	    a.address_dest,
+	    a.tel_no,
+	    a.order_comment,
+	    a.hp_no,
+	    a.order_date,
+	    a.prd_pmt_id,
+	    a.coupon_discount_amount,
+	    a.reserve_discount_amount,
+	    a.prd_orderdetail_id,
+	    a.prd_id,
+	    a.prd_count,
+	    a.prd_board_id,
+	    a.vbank_holder,
+	    a.vbank_name,
+	    a.vbank_num,
+	    a.vbank_date,
+	    a.pay_method
+	from
+	(
+		SELECT
+		    pot.prd_order_id,
+		    pot.user_id,
+		    pot.recipient,
+		    pot.total_amount,
+		    pot.discount_amount,
+		    pot.pmt_amount,
+		    pot.address_dest,
+		    pot.tel_no,
+		    pot.order_comment,
+		    pot.hp_no,
+		    pot.order_date,
+		    pot.prd_pmt_id,
+		    pot.coupon_discount_amount,
+		    pot.reserve_discount_amount,
+		    podt.prd_orderdetail_id,
+		    podt.prd_id,
+		    podt.prd_count,
+		    podt.prd_board_id,
+		    ppt.vbank_holder,
+		    ppt.vbank_name,
+		    ppt.vbank_num,
+		    ppt.vbank_date,
+		    ppt.pay_method
+		FROM
+		         team04.prd_orderdetail_t podt
+		    INNER JOIN team04.prd_order_t      pot ON pot.prd_order_id = podt.prd_order_id
+		    INNER JOIN team04.prd_payment_t    ppt ON pot.prd_order_id = ppt.prd_order_id
+		WHERE
+		    pot.user_id = #{user_id}
+		ORDER BY
+		    pot.order_date DESC
+	) a
+	where rownum=1
+	</select>
+ 
+	<select id="getPrdPayment" parameterType="OrderCompleteDTO" resultType="OrderCompleteDTO">
+		select pot.prd_order_id,pot.user_id,pot.address_dest,pot.hp_no,
+		ppt.pmt_amount
+		from prd_order_t pot
+		left join prd_payment_t ppt on (pot.prd_order_id=ppt.prd_order_id)
+		where pot.user_id=#{user_id} and ppt.prd_pmt_id=#{prd_pmt_id}
+	</select>
+
+	<resultMap id="orderMap" type="OrderDTO">
+		<id property="prd_order_id" column="prd_order_id" />
+		<result property="user_id"  column="user_id"/>
+		<result property="recipient"  column="recipient"/>
+		<result property="total_amount"  column="total_amount"/>
+		<result property="discount_amount"  column="discount_amount"/>
+		<result property="pmt_amount"  column="pmt_amount"/>
+		<result property="address_dest"  column="address_dest"/>
+		<result property="tel_no"  column="tel_no"/>
+		<result property="hp_no"  column="hp_no"/>
+		<result property="order_comment"  column="order_comment"/>
+		<result property="order_date"  column="order_date"/>
+		<result property="prd_pmt_id"  column="prd_pmt_id"/>
+		<result property="pay_method" column="pay_method"/>
+		<result property="coupon_discount_amount" column="coupon_discount_amount"/>
+		<result property="reserve_discount_amount" column="reserve_discount_amount"/>
+		<result property="balance_discount_amount" column="balance_discount_amount"/>
+		<collection property="orderDetailList" resultMap="orderDetailMap"/>
+	</resultMap>
+	
+	<resultMap id="orderDetailMap" type="OrderDetailDTO">
+		<id property="prd_orderdetail_id" column="prd_orderdetail_id"/>
+		<result property="prd_order_id" column="prd_order_id"/>
+		<result property="prd_nm" column="prd_nm"/>
+		<result property="prd_price" column="prd_price"/>
+		<result property="order_flag" column="order_flag"/>
+		<result property="upload_path" column="upload_path"/>
+		<result property="all_option" column="all_option"/>
+		<result property="prd_count" column="prd_count"/>
+		<result property="cancel_date" column="cancel_date"/>
+		<result property="prd_board_id" column="prd_board_id"/>
+		<result property="cancel_reason" column="cancel_reason"/>
+	</resultMap>
+
+	<select id="getOrderByOrderNo" resultMap="orderMap">
+		SELECT
+	        pot.PRD_ORDER_ID
+	       ,podt.PRD_ORDERDETAIL_ID
+	       ,(SELECT user_nm FROM user_t WHERE user_id = pot.user_id) AS user_id
+	       ,podt.prd_count
+	       ,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = podt.order_flag) AS ORDER_Flag
+	       ,(SELECT prd_nm FROM prd_t WHERE prd_id = podt.PRD_ID) AS prd_nm
+	       ,(SELECT prd_price FROM prd_t WHERE prd_id = podt.prd_id) AS prd_price
+	       ,(SELECT 
+	         concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,'')) 
+	         FROM prd_t WHERE prd_id = podt.PRD_ID) AS all_option
+	       ,(select PRD_IMAGE FROM prd_t where prd_id = podt.prd_id) as upload_path 
+	       ,pot.recipient
+	       ,pot.total_amount
+	       ,pot.discount_amount
+	       ,pot.pmt_amount
+	       ,(SELECT pay_method FROM PRD_PAYMENT_T where PRD_PMT_ID = pot.PRD_PMT_ID) AS pay_method
+	       ,podt.cancel_date
+	       ,pot.address_dest
+	       ,pot.tel_no
+	       ,pot.hp_no
+	       ,pot.order_comment
+	       ,pot.coupon_discount_amount
+	       ,pot.reserve_discount_amount
+	       ,pot.balance_discount_amount
+	       ,pot.ORDER_DATE
+	       ,(SELECT prd_board_id FROM prd_t WHERE prd_id = podt.prd_id) AS prd_board_id
+	    FROM PRD_ORDER_T pot
+	        ,PRD_ORDERDETAIL_T podt 
+	    WHERE podt.prd_order_id = pot.prd_order_id
+	    AND pot.prd_order_id = #{orderNo}
+	    AND pot.USER_ID = #{userId}
+	</select>
+	
+	<select id="getOrderDetail" resultType="OrderDetailDTO">
+		SELECT
+				odt.prd_orderdetail_id
+				,(SELECT prd_nm FROM prd_t WHERE prd_id = odt.prd_id) AS prd_nm
+				,(SELECT prd_price FROM prd_t WHERE prd_id = odt.prd_id) AS prd_price
+				,(SELECT dtl_nm FROM CODE_DTL_T WHERE grp_cd = 'ORDER_FLAG' AND dtl_cd = odt.order_flag) AS order_flag
+				,(select PRD_IMAGE FROM prd_t where prd_id = odt.prd_id) as upload_path 
+			    ,(SELECT 
+				         concat(concat(nvl(OPTION1,''), ' '),nvl(OPTION2,''))
+				         FROM prd_t WHERE prd_id = odt.PRD_ID) AS all_option
+				,odt.prd_count
+				,odt.cancel_date
+				,odt.prd_board_id
+		FROM prd_orderdetail_t odt,
+			 prd_order_t ot
+		WHERE odt.prd_order_id = ot.prd_order_id(+)
+		AND odt.prd_orderdetail_id = #{orderDetailNo}
+		AND ot.user_id = #{userId}
+	</select>
+	
+
+	<!-- 주문정보 삽입 (프로시저) -->
+    <select id="insertOrderAndPayment" parameterType="OrderCompleteDTO" statementType="CALLABLE">
+
+		{ CALL order_payment_insert(#{prd_order_id}, #{user_id}, #{recipient}, #{total_amount}, #{discount_amount}, #{pmt_amount}, #{address_dest}, #{tel_no}, #{hp_no}, 
+									#{order_comment}, #{order_date}, #{coupon_discount_amount}, #{reserve_discount_amount}, #{balance_discount_amount}, #{pmt_time}, #{pmt_id}, #{user_nm}, 
+									#{vbank_holder}, #{vbank_name}, #{vbank_num}, #{vbank_date}, #{pay_status}, #{pay_method}, #{expectPoint}) }
+		
+    </select>
+    
+    
+    <insert id="insertOrderDetail" parameterType="OrderCompleteDTO">
+    	
+    	{ CALL prd_orderdetail_insert(#{prd_order_id}, #{prd_id}, #{prd_count}, #{order_flag}, #{prd_board_id}) }
+    </insert>
+
+	<!-- <select id="getCancelData" resultType="map">
+		SELECT
+				ot.total_amount
+				,ot.discount_amount
+				,ot.pmt_amount
+				,ot.reserve_discount_amount
+				,(SELECT prd_price FROM prd_t WHERE prd_id = odt.prd_id) AS prd_price
+				,odt.prd_count
+		FROM prd_orderdetail_t odt,
+			 prd_order_t ot
+		WHERE odt.prd_order_id = ot.prd_order_id(+)
+		AND odt.prd_orderdetail_id = #{orderDetailNo}
+		AND ot.user_id = #{userId}
+	</select> -->
+	
+	<update id="cancelOrder">
+		UPDATE prd_order_t
+		SET	total_amount = #{updtTotal},
+			discount_amount = #{updtDis},
+			pmt_amount = #{updtPmt},
+			reserve_discount_amount = #{updtRDA},
+			coupon_discount_amount = #{updtCDA},
+			balance_discount_amount = #{updtBDA}
+		WHERE prd_order_id = #{orderId}
+		AND user_id = #{userId}
+	</update>
+	
+	<update id="cancelOrderDetail">
+		UPDATE prd_orderdetail_t
+		SET	prd_count = #{updtPC}
+			,cancel_date = systimestamp
+		<if test="updtFlag!=null and !updtFlag.equals('')">
+			,order_flag = #{updtFlag}
+		</if>
+		WHERE prd_orderdetail_id = #{oDetailId}
+		AND (SELECT user_id 
+					FROM prd_order_t pot
+						,prd_orderdetail_t podt
+					where pot.prd_order_id = podt.prd_order_id
+					and podt.prd_orderdetail_id = #{oDetailId} ) = #{userId}
+	</update>
+
+</mapper>

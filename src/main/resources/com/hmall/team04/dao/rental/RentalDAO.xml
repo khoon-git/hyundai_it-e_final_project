@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.rental.RentalDAO">
+
+	<select id="getRentalOrderComplete" parameterType="RentalCompleteDTO" resultType="RentalCompleteDTO">
+	SELECT
+	    a.prd_order_id,
+	    a.user_id,
+	    a.prd_id,
+	    a.prd_nm,
+	    a.prd_id AS prd_id1,
+	    a.recipient,
+	    a.pmt_amount,
+	    a.address_dest,
+	    a.tel_no,
+	    a.hp_no,
+	    a.order_comment,
+	    a.order_date,
+	    a.prd_pmt_id,
+	    a.order_flag,
+	    a.cancel_date,
+	    a.prd_image,
+	    a.vbank_holder,
+	    a.vbank_name,
+	    a.vbank_num,
+	    a.vbank_date,
+	    a.pay_method,
+	    a.sdate,
+	    a.edate
+	FROM
+	    (
+	        SELECT
+	            rpot.prd_order_id,
+	            rpot.user_id,
+	            rpot.prd_id,
+	            rpt.prd_nm,
+	            rpt.prd_id AS prd_id1,
+	            rpot.recipient,
+	            rpot.pmt_amount,
+	            rpot.address_dest,
+	            rpot.tel_no,
+	            rpot.hp_no,
+	            rpot.order_comment,
+	            rpot.order_date,
+	            rpot.prd_pmt_id,
+	            rpot.order_flag,
+	            rpot.cancel_date,
+	            rpt.prd_image,
+	            ppt.vbank_holder,
+	            ppt.vbank_name,
+	            ppt.vbank_num,
+	            ppt.vbank_date,
+	            ppt.pay_method,
+	            rudt.sdate,
+	            rudt.edate
+	        FROM
+	                 team04.rental_prd_order_t rpot
+	            INNER JOIN team04.rental_prd_t        rpt ON rpot.prd_id = rpt.prd_id
+	            INNER JOIN team04.prd_payment_t       ppt ON rpot.prd_order_id = ppt.prd_order_id
+	            INNER JOIN team04.rental_user_dt_t    rudt ON rpt.prd_id = rudt.prd_id
+	        WHERE
+	            rpot.user_id = #{user_id}
+	        ORDER BY
+	            rpot.order_date DESC
+	    ) a
+	WHERE
+	    ROWNUM = 1
+	</select>
+	
+	
+	<!-- 렌탈주문정보 삽입 (프로시저) -->
+    <select id="insertSuccessRentalOrder" parameterType="OrderCompleteDTO" statementType="CALLABLE">
+
+		{ CALL rental_order_payment_insert(#{prd_order_id}, #{user_id}, #{recipient}, #{pmt_amount}, #{address_dest}, #{tel_no}, #{hp_no}, #{order_comment}, #{order_date},
+									#{prd_id}, #{order_flag}, #{sdate}, #{edate}, #{rental_flag}, #{pmt_time}, #{pmt_id}, #{user_nm}, #{vbank_holder}, #{vbank_name},
+									#{vbank_num}, #{vbank_date}, #{pay_status}, #{pay_method}, #{coupon_discount_amount}, #{reserve_discount_amount}, #{balance_discount_amount}) }
+		
+    </select>
+
+</mapper>

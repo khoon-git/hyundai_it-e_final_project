@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.file.FileDAO">
+
+	<!-- file_yn 이 1인 review의 file들 조회 -->
+	<select id="getReviewFileList" parameterType="FileDTO" resultType="FileDTO">
+		select
+			file_id,article_id, upload_path, file_nm, file_type, ins_dt, board_flag
+		from file_t ft
+		WHERE ft.article_id=#{article_id} and ft.board_flag=#{board_flag}
+	</select>
+	
+	<!-- insert file -->
+	<insert id="insertReviewFile" parameterType="FileDTO">
+		insert into
+		file_t(file_id,article_id,upload_path,file_nm,file_type,board_flag)
+		values(file_t_file_id_seq.nextval,#{article_id},#{upload_path},#{file_nm},#{file_type},#{board_flag})
+	</insert>
+	
+	<!-- delete files of review -->
+	<delete id="deleteReviewfile" parameterType="FileDTO">
+		delete 
+		from file_t ft
+		WHERE ft.article_id=#{article_id} and ft.board_flag=#{board_flag}
+	</delete>
+	
+</mapper>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hmall.team04.dao.cs.FaqDAO">
+ 
+ <select id= "getfaqList" resultType = "FaqDTO">
+			 <![CDATA[
+			 	SELECT 
+			  		 title
+			 		,content
+			 		FROM(SELECT 
+			 				ROWNUM AS row_num
+							,pb.title
+							,pb.content
+							FROM (SELECT * FROM FAQ_V
+								  ORDER BY ins_dt DESC
+							)pb
+						   )
+				WHERE row_num < 11
+				]]>
+ </select>	
+ 
+ <select id ="getfaqListFlag" resultType = "FaqDTO">
+			 SELECT 
+			  title
+			 ,content
+			 FROM(  
+					SELECT ROWNUM AS row_num
+					,pb.title
+					,pb.content
+					,Pb.FAQ_FLAG
+					FROM (
+						SELECT * FROM FAQ_V
+						ORDER BY ins_dt DESC
+					) pb
+				)
+			WHERE FAQ_FLAG = #{faq_flag}
+ </select>
+ 
+ 
+ 
+ 
+ 
+  <select id= "getfaqListAll" resultType = "FaqDTO">
+			select 
+				*
+			from FAQ_V
+ </select>	
+ 
+
+ <select id = "getfaqListFind" resultType = "FaqDTO">
+		  <![CDATA[
+		 SELECT  
+			 title
+			,content
+			FROM (
+		 			SELECT 
+		 			 ROWNUM AS row_num
+					,pb.title
+					,pb.content
+					,pb.ins_dt
+					 FROM (
+		 				SELECT * FROM FAQ_V fv 
+		 					WHERE  title LIKE '%'||#{keyword}||'%' OR content LIKE '%'||#{keyword}||'%'
+		 					ORDER BY ins_dt DESC
+						) pb
+					)
+		]]>
+ 
+ </select>
+
+</mapper>

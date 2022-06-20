@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hmall.team04.dao.user.UserDAO">
+	
+	<resultMap id="userMap" type="UserDTO">
+		<id property="user_id" column="user_id"/>
+		<result property="user_nm" column="user_nm"/>
+		<result property="password" column="password"/>
+		<result property="email" column="email"/>
+		<result property="birth" column="birth"/>
+		<result property="address_f" column="address_f"/>
+		<result property="address_l" column="address_l"/>
+		<result property="hp_no" column="hp_no"/>
+		<result property="ins_dt" column="ins_dt"/>
+		<result property="upd_dt" column="upd_dt"/>
+		<result property="enabled" column="enabled"/>
+		<collection property="authList" resultMap="authMap"></collection>
+	</resultMap>
+	
+	<resultMap type="UserDTO" id="finduserMap">
+		<result property="user_id" column="user_id"/>
+		<result property="ins_dt" column="ins_dt"/>
+	</resultMap>
+	
+	<resultMap id="authMap" type="AuthDTO">
+		<result property="user_id" column="user_id"/>
+		<result property="auth" column="auth"/>
+	</resultMap>
+	
+	<select id="selectUserInfo" resultMap="userMap">
+		SELECT
+			u.user_id, user_nm, password, email, birth, address_f, address_l, hp_no, ins_dt, upd_dt, enabled, a.auth
+		FROM
+			user_t u LEFT OUTER JOIN user_auth_t a on u.user_id = a.user_id
+		WHERE u.user_id = #{userid}
+	</select>
+	
+	<select id="findIdbyNameEmail" resultMap="finduserMap">
+		SELECT
+			user_id, ins_dt 
+		FROM
+			user_t 
+		WHERE user_nm = #{usernm} and email = #{email}
+	</select>
+	
+	<select id="findPwd" resultType="int">
+		SELECT
+			count(*)
+		FROM
+			user_t 
+		WHERE user_id = #{user_id} and email = #{email} and hp_no = #{hp_no}
+	</select>
+	
+	<select id="getUserNamebyUserId" resultType = "String">
+		select 
+			user_nm
+			from user_t
+			where user_id = #{userid}
+	</select> 
+	
+	<select id="comparePassword" resultType="String">
+		SELECT
+				password
+		FROM	user_t
+		WHERE	user_id = #{user_id}
+	</select>
+	
+	<update id="updatePassword">
+		UPDATE user_t
+		SET password = #{new_pw}
+		WHERE user_id = #{user_id}
+	</update>
+	
+	<select id="getUserInfo" resultType="UserTDTO">
+		SELECT
+				*
+		FROM
+				user_t
+		WHERE	user_id = #{userid}
+	</select>
+	
+	<select id="updateUserInfo" statementType="CALLABLE">
+		CALL user_t_update_user_proc( #{userid,mode=IN}, #{dto.user_nm,mode=IN}, #{dto.email,mode=IN}, #{dto.birth,mode=IN}, #{dto.address_f,mode=IN}, #{dto.address_l,mode=IN}, #{dto.hp_no,mode=IN}, #{dto.gender,mode=IN}, #{updtRows,mode=OUT,jdbcType=INTEGER,javaType=Integer} )
+	</select>
+	
+	<!-- 회원 탈퇴 -->
+	<select id="insertLeaveUser" statementType="CALLABLE">
+		CALL user_leave_t_insert_leave_user_proc( #{user_id}, #{leaveUserRsn}, #{leaveUserRsnMemo} )
+	</select>
+	
+	
+</mapper>
