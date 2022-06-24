@@ -119,7 +119,7 @@
 
 <br>
 
-## 🤝 Contributors - PJT1_TEAM 4
+## 🤝 Contributors 
 
 <a href = "https://github.com/devsacti">
   <img src="https://avatars.githubusercontent.com/u/88543657?v=4" alt="jeonghwu" width="80" style="max-width:100%" />
